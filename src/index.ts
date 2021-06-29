@@ -1,45 +1,38 @@
-import express from 'express';
-import { ICalculate, ICalculateProduct, IItems, IWebHook } from '../interfaces/webhook';
-import axios from 'axios';
+import { VercelRequest, VercelResponse } from '@vercel/node';
 import dotenv from 'dotenv';
+import axios from 'axios';
+import { ICalculate, IWebHook, ICalculateProduct, IItems } from '../interfaces/webhook';
 
 dotenv.config();
 
-const app = express();
-const port = process.env.PORT || 3000;
-
-// middlewares
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-
-// routes
-app.get('/', (req, res) => {
-  res.send('hello world!');
-});
-
-// receive webhook here
-app.post("/hook", async (req, res) => {
-  const rates: any = [];
-  const { content }: IWebHook = req.body;
-  const { billingAddressPostalCode, shippingAddressPostalCode, items } = content;
-  try {
-    const { data } = await sendPostalCodeAndItems(billingAddressPostalCode, shippingAddressPostalCode, items);
-    data.forEach((item: any) => {
-      if (!item.error) {
-        rates.push({ 
-          cost: item.price, 
-          description: `${item.company.name} - ${item.name.replace('.', '')}`, 
-          guaranteedDaysToDelivery: item.delivery_time,
+export default async(req: VercelRequest, res: VercelResponse): Promise<void> => {
+    const rates: any = [];
+    const { content }: IWebHook = req.body;
+    const { billingAddressPostalCode, shippingAddressPostalCode, items } = content;
+    try {
+        const { data } = await sendPostalCodeAndItems(billingAddressPostalCode, shippingAddressPostalCode, items);
+        data.forEach((item: any) => {
+          if (!item.error) {
+            rates.push({ 
+              cost: item.price, 
+              description: `${item.company.name} - ${item.name.replace('.', '')}`, 
+              guaranteedDaysToDelivery: item.delivery_time,
+            });
+          }
         });
-      }
-    });
-    // response for snipcart
-    res.send({ rates });
-  }
-  catch (err) {
-    console.log(err);
-  }
-});
+        // response for snipcart
+        res.send({ rates });
+    }
+    catch (err) {
+        console.log(err);
+        res.send({
+          errors: [{
+            key: 'error_api_melhor_envio',
+            message: 'Erro ao processar na melhor envio'
+          }]
+        });
+    }
+};
 
 // send data for melhor envio
 const sendPostalCodeAndItems = (billingPostalCode: string, shippingPostalCode: string, items: IItems[]) => {
@@ -70,6 +63,8 @@ const sendPostalCodeAndItems = (billingPostalCode: string, shippingPostalCode: s
     products,
   };
 
+  console.log(dataBody);
+
   const headers = {
     'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json',
@@ -81,7 +76,3 @@ const sendPostalCodeAndItems = (billingPostalCode: string, shippingPostalCode: s
     headers,
   });
 }
-
-app.listen(port, () => {
-  return console.log(`server is listening on ${port}`);
-});
