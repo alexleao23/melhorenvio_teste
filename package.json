@@ -11,6 +11,6 @@
     "nodemon": "^2.0.14"
   },
   "scripts": {
-    "start": "nodemon src/api/index.ts localhost 3000"
+    "start": "nodemon api/index.ts localhost 3000"
   }
 }

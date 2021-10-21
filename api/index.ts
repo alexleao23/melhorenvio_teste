@@ -73,6 +73,7 @@ export default async(
           shippingAddressPostalCode,
           items
         );
+        console.log();
         data.forEach((item: any) => {
           if (!item.error) {
             rates.push({ 
@@ -90,7 +91,8 @@ export default async(
         res.send({
           errors: [{
             key: 'error_api_melhor_envio',
-            message: 'Erro ao processar na melhor envio'
+            message: 'Erro ao processar na melhor envio',
+            error: err
           }]
         });
     }
