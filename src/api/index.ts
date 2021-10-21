@@ -68,7 +68,11 @@ export default async(
     const { content }: IWebHook = req.body;
     const { billingAddressPostalCode, shippingAddressPostalCode, items } = content;
     try {
-        const { data } = await sendPostalCodeAndItems(billingAddressPostalCode, shippingAddressPostalCode, items);
+        const { data } = await sendPostalCodeAndItems(
+          billingAddressPostalCode,
+          shippingAddressPostalCode,
+          items
+        );
         data.forEach((item: any) => {
           if (!item.error) {
             rates.push({ 
